@@ -28,8 +28,8 @@ import java.util.Date;
 import java.util.List;
 
 import net.sf.mpxj.Duration;
-import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.TimeUnit;
+import net.sf.mpxj.WorkCalendar;
 import net.sf.mpxj.TimephasedWork;
 import net.sf.mpxj.common.AbstractTimephasedWorkNormaliser;
 import net.sf.mpxj.common.DateHelper;
@@ -48,7 +48,7 @@ public abstract class MPPAbstractTimephasedWorkNormaliser extends AbstractTimeph
     * @param calendar current calendar
     * @param list list of assignment data
     */
-   @Override public void normalise(ProjectCalendar calendar, List<TimephasedWork> list)
+   @Override public void normalise(WorkCalendar calendar, List<TimephasedWork> list)
    {
       if (!list.isEmpty())
       {
@@ -70,7 +70,7 @@ public abstract class MPPAbstractTimephasedWorkNormaliser extends AbstractTimeph
     * @param calendar current project calendar
     * @param list list of assignment data
     */
-   private void splitDays(ProjectCalendar calendar, List<TimephasedWork> list)
+   private void splitDays(WorkCalendar calendar, List<TimephasedWork> list)
    {
       List<TimephasedWork> result = new ArrayList<>();
       boolean remainderInserted = false;
@@ -154,7 +154,7 @@ public abstract class MPPAbstractTimephasedWorkNormaliser extends AbstractTimeph
     * @param calendarWork working hours for assignment from the calendar
     * @return first day and remainder assignments
     */
-   private TimephasedWork[] splitFirstDay(ProjectCalendar calendar, TimephasedWork assignment, Duration calendarWork)
+   private TimephasedWork[] splitFirstDay(WorkCalendar calendar, TimephasedWork assignment, Duration calendarWork)
    {
       TimephasedWork[] result = new TimephasedWork[2];
 
@@ -253,7 +253,7 @@ public abstract class MPPAbstractTimephasedWorkNormaliser extends AbstractTimeph
     * @param calendar current calendar
     * @param list assignment data
     */
-   protected abstract void mergeSameDay(ProjectCalendar calendar, List<TimephasedWork> list);
+   protected abstract void mergeSameDay(WorkCalendar calendar, List<TimephasedWork> list);
 
    /**
     * Retrieves the pro-rata work carried out on a given day.
@@ -262,7 +262,7 @@ public abstract class MPPAbstractTimephasedWorkNormaliser extends AbstractTimeph
     * @param assignment current assignment.
     * @return assignment work duration
     */
-   private Duration getAssignmentWork(ProjectCalendar calendar, TimephasedWork assignment)
+   private Duration getAssignmentWork(WorkCalendar calendar, TimephasedWork assignment)
    {
 
       Date splitFinishTime = calendar.getFinishTime(assignment.getStart());

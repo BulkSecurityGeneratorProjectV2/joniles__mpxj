@@ -28,8 +28,8 @@ import java.util.Date;
 import java.util.List;
 
 import net.sf.mpxj.Duration;
-import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.TimeUnit;
+import net.sf.mpxj.WorkCalendar;
 import net.sf.mpxj.TimephasedWork;
 import net.sf.mpxj.common.DateHelper;
 
@@ -44,7 +44,7 @@ public class MPPTimephasedWorkNormaliser extends MPPAbstractTimephasedWorkNormal
     * @param calendar current calendar
     * @param list assignment data
     */
-   @Override protected void mergeSameDay(ProjectCalendar calendar, List<TimephasedWork> list)
+   @Override protected void mergeSameDay(WorkCalendar calendar, List<TimephasedWork> list)
    {
       List<TimephasedWork> result = new ArrayList<>();
 

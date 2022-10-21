@@ -28,8 +28,8 @@ import java.util.Date;
 import java.util.List;
 
 import net.sf.mpxj.Duration;
-import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.TimeUnit;
+import net.sf.mpxj.WorkCalendar;
 import net.sf.mpxj.TimephasedWork;
 import net.sf.mpxj.common.AbstractTimephasedWorkNormaliser;
 import net.sf.mpxj.common.DateHelper;
@@ -49,7 +49,7 @@ public class MSPDITimephasedWorkNormaliser extends AbstractTimephasedWorkNormali
     * @param calendar current calendar
     * @param list list of assignment data
     */
-   @Override public void normalise(ProjectCalendar calendar, List<TimephasedWork> list)
+   @Override public void normalise(WorkCalendar calendar, List<TimephasedWork> list)
    {
       //dumpList("raw", result);
       splitDays(calendar, list);
@@ -79,7 +79,7 @@ public class MSPDITimephasedWorkNormaliser extends AbstractTimephasedWorkNormali
     * @param calendar current project calendar
     * @param list list of assignment data
     */
-   private void splitDays(ProjectCalendar calendar, List<TimephasedWork> list)
+   private void splitDays(WorkCalendar calendar, List<TimephasedWork> list)
    {
       List<TimephasedWork> result = new ArrayList<>();
       for (TimephasedWork assignment : list)
@@ -126,7 +126,7 @@ public class MSPDITimephasedWorkNormaliser extends AbstractTimephasedWorkNormali
     * @param calendarWork working hours for assignment from the calendar
     * @return first day and remainder assignments
     */
-   private TimephasedWork[] splitFirstDay(ProjectCalendar calendar, TimephasedWork assignment, Duration calendarWork)
+   private TimephasedWork[] splitFirstDay(WorkCalendar calendar, TimephasedWork assignment, Duration calendarWork)
    {
       TimephasedWork[] result = new TimephasedWork[2];
 
@@ -201,7 +201,7 @@ public class MSPDITimephasedWorkNormaliser extends AbstractTimephasedWorkNormali
     * @param calendar current calendar
     * @param list assignment data
     */
-   private void mergeSameDay(ProjectCalendar calendar, List<TimephasedWork> list)
+   private void mergeSameDay(WorkCalendar calendar, List<TimephasedWork> list)
    {
       List<TimephasedWork> result = new ArrayList<>();
 
@@ -275,7 +275,7 @@ public class MSPDITimephasedWorkNormaliser extends AbstractTimephasedWorkNormali
     * @param calendar current calendar
     * @param list assignment data
     */
-   private void validateSameDay(ProjectCalendar calendar, List<TimephasedWork> list)
+   private void validateSameDay(WorkCalendar calendar, List<TimephasedWork> list)
    {
       for (TimephasedWork assignment : list)
       {
