@@ -36,6 +36,7 @@ import java.util.WeakHashMap;
 import java.util.stream.Collectors;
 
 import net.sf.mpxj.common.DateHelper;
+import net.sf.mpxj.common.DurationHelper;
 import net.sf.mpxj.common.NumberHelper;
 
 /**
@@ -797,7 +798,7 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
 
       //
       // We want to avoid the case where a calendar doesn't
-      // have enough working days defined to calculate]a start date. We will stop
+      // have enough working days defined to calculate a start date. We will stop
       // searching if we reach the project start date. If we don't have
       // a project start date defined, we'll allow the search to go back one year.
       //
@@ -1469,7 +1470,7 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
    public Duration getWork(Day day, TimeUnit format)
    {
       ProjectCalendarHours ranges = getRanges(null, null, day);
-      return convertFormat(getTotalTime(ranges), format);
+      return DurationHelper.convertFormat(this, DurationHelper.getTotalTime(ranges), format);
    }
 
    /**
@@ -1483,7 +1484,7 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
    public Duration getWork(Date date, TimeUnit format)
    {
       ProjectCalendarHours ranges = getRanges(date, null, null);
-      return convertFormat(getTotalTime(ranges), format);
+      return DurationHelper.convertFormat(this, DurationHelper.getTotalTime(ranges), format);
    }
 
    /**
@@ -1580,7 +1581,7 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
                   //
                   // Add the working time for the whole day
                   //
-                  totalTime += getTotalTime(ranges);
+                  totalTime += DurationHelper.getTotalTime(ranges);
                }
             }
 
@@ -1606,105 +1607,7 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
          totalTime = cachedResult.longValue();
       }
 
-      return convertFormat(totalTime, format);
-   }
-
-   /**
-    * Utility method used to convert an integer time representation into a
-    * Duration instance.
-    *
-    * @param totalTime integer time representation
-    * @param format required time format
-    * @return new Duration instance
-    */
-   private Duration convertFormat(long totalTime, TimeUnit format)
-   {
-      double duration = totalTime;
-
-      switch (format)
-      {
-         case MINUTES:
-         case ELAPSED_MINUTES:
-         {
-            duration /= (60 * 1000);
-            break;
-         }
-
-         case HOURS:
-         case ELAPSED_HOURS:
-         {
-            duration /= (60 * 60 * 1000);
-            break;
-         }
-
-         case DAYS:
-         {
-            double minutesPerDay = NumberHelper.getDouble(getMinutesPerDay());
-            if (minutesPerDay != 0)
-            {
-               duration /= (minutesPerDay * 60 * 1000);
-            }
-            else
-            {
-               duration = 0;
-            }
-            break;
-         }
-
-         case WEEKS:
-         {
-            double minutesPerWeek = NumberHelper.getDouble(getMinutesPerWeek());
-            if (minutesPerWeek != 0)
-            {
-               duration /= (minutesPerWeek * 60 * 1000);
-            }
-            else
-            {
-               duration = 0;
-            }
-            break;
-         }
-
-         case MONTHS:
-         {
-            double daysPerMonth = getParentFile().getProjectProperties().getDaysPerMonth().doubleValue();
-            double minutesPerDay = NumberHelper.getDouble(getMinutesPerDay());
-            if (daysPerMonth != 0 && minutesPerDay != 0)
-            {
-               duration /= (daysPerMonth * minutesPerDay * 60 * 1000);
-            }
-            else
-            {
-               duration = 0;
-            }
-            break;
-         }
-
-         case ELAPSED_DAYS:
-         {
-            duration /= (24 * 60 * 60 * 1000);
-            break;
-         }
-
-         case ELAPSED_WEEKS:
-         {
-            duration /= (7 * 24 * 60 * 60 * 1000);
-            break;
-         }
-
-         case ELAPSED_MONTHS:
-         {
-            duration /= (30.0 * 24.0 * 60.0 * 60.0 * 1000.0);
-            break;
-         }
-
-         default:
-         {
-            throw new IllegalArgumentException("TimeUnit " + format + " not supported");
-         }
-      }
-
-      return (Duration.getInstance(duration, format));
+      return DurationHelper.convertFormat(this, totalTime, format);
    }
 
    /**
@@ -1722,24 +1625,7 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
       long total = 0;
       for (DateRange range : exception)
       {
-         total += getTime(range.getStart(), range.getEnd(), currentTime, after);
-      }
-      return (total);
-   }
-
-   /**
-    * Retrieves the amount of working time represented by
-    * a calendar exception.
-    *
-    * @param exception calendar exception
-    * @return length of time in milliseconds
-    */
-   private long getTotalTime(ProjectCalendarHours exception)
-   {
-      long total = 0;
-      for (DateRange range : exception)
-      {
-         total += getTime(range.getStart(), range.getEnd());
+         total += getTotalTime(range.getStart(), range.getEnd(), currentTime, after);
       }
       return (total);
    }
@@ -1788,7 +1674,7 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
                }
                else
                {
-                  total += getTime(start, end, canoncialRangeStart, canonicalRangeEnd);
+                  total += getTotalTime(start, end, canoncialRangeStart, canonicalRangeEnd);
                }
             }
          }
@@ -1807,7 +1693,7 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
     * @param after true if time after target required, false for time before
     * @return length of time in milliseconds
     */
-   private long getTime(Date start, Date end, long target, boolean after)
+   private long getTotalTime(Date start, Date end, long target, boolean after)
    {
       long total = 0;
       if (start != null && end != null)
@@ -1851,40 +1737,6 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
    }
 
    /**
-    * Retrieves the amount of time between two date time values. Note that
-    * these values are converted into canonical values to remove the
-    * date component.
-    *
-    * @param start start time
-    * @param end end time
-    * @return length of time
-    */
-   private long getTime(Date start, Date end)
-   {
-      long total = 0;
-      if (start != null && end != null)
-      {
-         Date startTime = DateHelper.getCanonicalTime(start);
-         Date endTime = DateHelper.getCanonicalTime(end);
-
-         Date startDay = DateHelper.getDayStartDate(start);
-         Date finishDay = DateHelper.getDayStartDate(end);
-
-         //
-         // Handle the case where the end of the range is at midnight -
-         // this will show up as the start and end days not matching
-         //
-         if (startDay.getTime() != finishDay.getTime())
-         {
-            endTime = DateHelper.addDays(endTime, 1);
-         }
-
-         total = (endTime.getTime() - startTime.getTime());
-      }
-      return (total);
-   }
-
-   /**
     * This method returns the length of overlapping time between two time
     * ranges.
     *
@@ -1894,7 +1746,7 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
     * @param end2 end of second range
     * @return overlapping time in milliseconds
     */
-   private long getTime(Date start1, Date end1, Date start2, Date end2)
+   private long getTotalTime(Date start1, Date end1, Date start2, Date end2)
    {
       long total = 0;
 

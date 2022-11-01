@@ -27,8 +27,10 @@ import java.util.ArrayDeque;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Deque;
+import java.util.List;
 import java.util.TimeZone;
 
+import net.sf.mpxj.DateRange;
 import net.sf.mpxj.Duration;
 import net.sf.mpxj.ProjectCalendar;
 import net.sf.mpxj.Task;
