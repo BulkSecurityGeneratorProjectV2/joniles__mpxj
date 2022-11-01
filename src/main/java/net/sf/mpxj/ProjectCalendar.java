@@ -1500,106 +1500,11 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
    {
       DateRange range = new DateRange(startDate, endDate);
       Long cachedResult = m_workingDateCache.get(range);
-      long totalTime = 0;
+      long totalTime;
 
       if (cachedResult == null)
       {
-         //
-         // We want the start date to be the earliest date, and the end date
-         // to be the latest date. Set a flag here to indicate if we have swapped
-         // the order of the supplied date.
-         //
-         boolean invert = false;
-         if (startDate.getTime() > endDate.getTime())
-         {
-            invert = true;
-            Date temp = startDate;
-            startDate = endDate;
-            endDate = temp;
-         }
-
-         Date canonicalStartDate = DateHelper.getDayStartDate(startDate);
-         Date canonicalEndDate = DateHelper.getDayStartDate(endDate);
-
-         if (canonicalStartDate.getTime() == canonicalEndDate.getTime())
-         {
-            ProjectCalendarHours ranges = getRanges(startDate, null, null);
-            if (ranges.size() != 0)
-            {
-               totalTime = getTotalTime(ranges, startDate, endDate);
-            }
-         }
-         else
-         {
-            //
-            // Find the first working day in the range
-            //
-            Date currentDate = startDate;
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(startDate);
-            Day day = Day.getInstance(cal.get(Calendar.DAY_OF_WEEK));
-            while (!isWorkingDate(currentDate, day) && currentDate.getTime() < canonicalEndDate.getTime())
-            {
-               cal.add(Calendar.DAY_OF_YEAR, 1);
-               currentDate = cal.getTime();
-               day = day.getNextDay();
-            }
-
-            if (currentDate.getTime() < canonicalEndDate.getTime())
-            {
-               //
-               // Calculate the amount of working time for this day
-               //
-               totalTime += getTotalTime(getRanges(currentDate, null, day), currentDate, true);
-
-               //
-               // Process each working day until we reach the last day
-               //
-               while (true)
-               {
-                  cal.add(Calendar.DAY_OF_YEAR, 1);
-                  currentDate = cal.getTime();
-                  day = day.getNextDay();
-
-                  //
-                  // We have reached the last day
-                  //
-                  if (currentDate.getTime() >= canonicalEndDate.getTime())
-                  {
-                     break;
-                  }
-
-                  //
-                  // Skip this day if it has no working time
-                  //
-                  ProjectCalendarHours ranges = getRanges(currentDate, null, day);
-                  if (ranges.size() == 0)
-                  {
-                     continue;
-                  }
-
-                  //
-                  // Add the working time for the whole day
-                  //
-                  totalTime += DurationHelper.getTotalTime(ranges);
-               }
-            }
-
-            //
-            // We are now at the last day
-            //
-            ProjectCalendarHours ranges = getRanges(endDate, null, day);
-            if (ranges.size() != 0)
-            {
-               totalTime += getTotalTime(ranges, DateHelper.getDayStartDate(endDate), endDate);
-            }
-         }
-
-         if (invert)
-         {
-            totalTime = -totalTime;
-         }
-
+         totalTime = calculateWork(startDate, endDate);
          m_workingDateCache.put(range, Long.valueOf(totalTime));
       }
       else
@@ -1610,24 +1515,121 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
       return DurationHelper.convertFormat(this, totalTime, format);
    }
 
+   private long calculateWork(Date startDate, Date endDate)
+   {
+      long totalTime = 0;
+
+      //
+      // We want the start date to be the earliest date, and the end date
+      // to be the latest date. Set a flag here to indicate if we have swapped
+      // the order of the supplied date.
+      //
+      boolean invert = false;
+      if (startDate.getTime() > endDate.getTime())
+      {
+         invert = true;
+         Date temp = startDate;
+         startDate = endDate;
+         endDate = temp;
+      }
+
+      Date canonicalStartDate = DateHelper.getDayStartDate(startDate);
+      Date canonicalEndDate = DateHelper.getDayStartDate(endDate);
+
+      if (canonicalStartDate.getTime() == canonicalEndDate.getTime())
+      {
+         ProjectCalendarHours ranges = getRanges(startDate, null, null);
+         if (ranges.size() != 0)
+         {
+            totalTime = getTotalTime(ranges, startDate, endDate);
+         }
+      }
+      else
+      {
+         //
+         // Find the first working day in the range
+         //
+         Date currentDate = startDate;
+         Calendar cal = Calendar.getInstance();
+         cal.setTime(startDate);
+         Day day = Day.getInstance(cal.get(Calendar.DAY_OF_WEEK));
+         while (!isWorkingDate(currentDate, day) && currentDate.getTime() < canonicalEndDate.getTime())
+         {
+            cal.add(Calendar.DAY_OF_YEAR, 1);
+            currentDate = cal.getTime();
+            day = day.getNextDay();
+         }
+
+         if (currentDate.getTime() < canonicalEndDate.getTime())
+         {
+            //
+            // Calculate the amount of working time for this day
+            //
+            totalTime += getTotalTime(getRanges(currentDate, null, day), currentDate);
+
+            //
+            // Process each working day until we reach the last day
+            //
+            while (true)
+            {
+               cal.add(Calendar.DAY_OF_YEAR, 1);
+               currentDate = cal.getTime();
+               day = day.getNextDay();
+
+               //
+               // We have reached the last day
+               //
+               if (currentDate.getTime() >= canonicalEndDate.getTime())
+               {
+                  break;
+               }
+
+               //
+               // Skip this day if it has no working time
+               //
+               ProjectCalendarHours ranges = getRanges(currentDate, null, day);
+               if (ranges.size() == 0)
+               {
+                  continue;
+               }
+
+               //
+               // Add the working time for the whole day
+               //
+               totalTime += DurationHelper.getTotalTime(ranges);
+            }
+         }
+
+         //
+         // We are now at the last day
+         //
+         ProjectCalendarHours ranges = getRanges(endDate, null, day);
+         if (ranges.size() != 0)
+         {
+            totalTime += getTotalTime(ranges, DateHelper.getDayStartDate(endDate), endDate);
+         }
+      }
+
+      if (invert)
+      {
+         totalTime = -totalTime;
+      }
+
+      return totalTime;
+   }
+
    /**
     * Retrieves the amount of time represented by a calendar exception
-    * before or after an intersection point.
+    * after an intersection point.
     *
     * @param exception calendar exception
     * @param date intersection time
-    * @param after true to report time after intersection, false to report time before
     * @return length of time in milliseconds
     */
-   private long getTotalTime(ProjectCalendarHours exception, Date date, boolean after)
+   private long getTotalTime(ProjectCalendarHours exception, Date date)
    {
       long currentTime = DateHelper.getCanonicalTime(date).getTime();
-      long total = 0;
-      for (DateRange range : exception)
-      {
-         total += getTotalTime(range.getStart(), range.getEnd(), currentTime, after);
-      }
-      return (total);
+      return exception.stream().mapToLong(r -> getTotalTime(r.getStart(), r.getEnd(), currentTime)).sum();
    }
 
    /**
@@ -1690,10 +1692,9 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
     * @param start time range start
     * @param end time range end
     * @param target target intersection point
-    * @param after true if time after target required, false for time before
     * @return length of time in milliseconds
     */
-   private long getTotalTime(Date start, Date end, long target, boolean after)
+   private long getTotalTime(Date start, Date end, long target)
    {
       long total = 0;
       if (start != null && end != null)
@@ -1716,24 +1717,17 @@ public final class ProjectCalendar extends ProjectCalendarDays implements Projec
          int diff = DateHelper.compare(startTime, endTime, target);
          if (diff == 0)
          {
-            if (after)
-            {
-               total = (endTime.getTime() - target);
-            }
-            else
-            {
-               total = (target - startTime.getTime());
-            }
+            total = (endTime.getTime() - target);
          }
          else
          {
-            if ((after && diff < 0) || (!after && diff > 0))
+            if (diff < 0)
             {
                total = (endTime.getTime() - startTime.getTime());
             }
          }
       }
-      return (total);
+      return total;
    }
 
    /**
