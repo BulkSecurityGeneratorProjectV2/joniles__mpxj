@@ -351,7 +351,7 @@ final class PrimaveraPMProjectWriter
          ExpenseCategoryType ect = m_factory.createExpenseCategoryType();
          ect.setObjectId(category.getUniqueID());
          ect.setName(category.getName());
-         ect.setSequenceNumber(category.getSequence());
+         ect.setSequenceNumber(category.getSequenceNumber());
          expenseCategories.add(ect);
       }
    }
@@ -369,7 +369,7 @@ final class PrimaveraPMProjectWriter
          cat.setId(account.getID());
          cat.setName(account.getName());
          cat.setDescription(account.getDescription());
-         cat.setSequenceNumber(account.getSequence());
+         cat.setSequenceNumber(account.getSequenceNumber());
 
          if (account.getParent() != null)
          {
@@ -738,6 +738,7 @@ final class PrimaveraPMProjectWriter
       xml.setParentObjectId(mpxj.getParentResourceUniqueID());
       xml.setResourceNotes(getResourceNotes(mpxj.getNotesObject()));
       xml.setResourceType(getResourceType(mpxj));
+      xml.setSequenceNumber(mpxj.getSequenceNumber());
       xml.getUDF().addAll(writeUDFType(FieldTypeClass.RESOURCE, mpxj));
    }
 
@@ -764,6 +765,7 @@ final class PrimaveraPMProjectWriter
       xml.setId(mpxj.getResourceID());
       xml.setCalculateCostFromUnits(Boolean.valueOf(mpxj.getCalculateCostsFromUnits()));
       xml.setResponsibilities(getResourceNotes(mpxj.getNotesObject()));
+      xml.setSequenceNumber(mpxj.getSequenceNumber());
    }
 
    /**
@@ -803,7 +805,7 @@ final class PrimaveraPMProjectWriter
 
       // Filter out WBS entries and generate a sequence number.
       // If it's a summary task... it's a WBS entry. If the task has come from P6, and the activity type is not set, it's a WBS entry
-      Map<Task, Integer> wbsSequence = m_projectFile.getTasks().stream().filter(t -> t.getSummary() || (m_activityTypePopulated && t.getActivityType() == null)).collect(Collectors.toMap(t -> t, t -> m_wbsSequence.getNext()));
+      Map<Task, Integer> wbsSequence = m_projectFile.getTasks().stream().filter(t -> t.getSummary() || (m_activityTypePopulated && t.getActivityType() == null)).collect(Collectors.toMap(t -> t, t -> t.getSequenceNumber() == null ? m_wbsSequence.getNext() : t.getSequenceNumber()));
 
       // Sort the tasks into unique ID order
       List<Task> tasks = new ArrayList<>(m_projectFile.getTasks());
@@ -1962,6 +1964,9 @@ final class PrimaveraPMProjectWriter
       ACTIVITY_TYPE_MAP.put(net.sf.mpxj.ActivityType.START_MILESTONE, "Start Milestone");
       ACTIVITY_TYPE_MAP.put(net.sf.mpxj.ActivityType.FINISH_MILESTONE, "Finish Milestone");
       ACTIVITY_TYPE_MAP.put(net.sf.mpxj.ActivityType.WBS_SUMMARY, "WBS Summary");
+      ACTIVITY_TYPE_MAP.put(net.sf.mpxj.ActivityType.START_FLAG, "Start Milestone");
+      ACTIVITY_TYPE_MAP.put(net.sf.mpxj.ActivityType.FINISH_FLAG, "Finish Milestone");
+      ACTIVITY_TYPE_MAP.put(net.sf.mpxj.ActivityType.HAMMOCK, "Resource Dependent");
    }
 
    private static final Map<CriticalActivityType, String> CRITICAL_ACTIVITY_MAP = new HashMap<>();
